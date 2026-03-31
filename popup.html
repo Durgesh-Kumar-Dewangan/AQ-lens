@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Reader Lens</title>
+  <style>
+    :root {
+      --bg:      #040810;
+      --bg2:     #0a0f1e;
+      --border:  rgba(59,130,246,0.2);
+      --accent:  #3b82f6;
+      --accent2: #1d4ed8;
+      --glow:    rgba(59,130,246,0.25);
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --success: #22c55e;
+      --danger:  #ef4444;
+      --warn:    #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 60%, #050a16 100%);
+      color: var(--text);
+      width: 340px;
+      min-height: 520px;
+    }
+
+    /* ── Header ──────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(37,99,235,0.04));
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-orb {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(37,99,235,0.35), rgba(37,99,235,0.08));
+      border: 1px solid rgba(96,165,250,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(37,99,235,0.2);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    .header-text p {
+      font-size: 10.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .version {
+      margin-left: auto;
+      font-size: 9px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── Body ────────────────────────────────────────── */
+    .body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── Toggle Button ───────────────────────────────── */
+    .toggle-btn {
+      width: 100%;
+      padding: 11px;
+      background: linear-gradient(135deg, rgba(37,99,235,0.22), rgba(37,99,235,0.08));
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(37,99,235,0.12);
+    }
+
+    .toggle-btn:hover {
+      background: linear-gradient(135deg, rgba(37,99,235,0.35), rgba(37,99,235,0.18));
+      box-shadow: 0 0 30px rgba(37,99,235,0.25);
+      transform: translateY(-1px);
+    }
+
+    /* ── Section ─────────────────────────────────────── */
+    .section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 8px 12px;
+      background: rgba(59,130,246,0.06);
+      border-bottom: 1px solid rgba(59,130,246,0.1);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Fields ──────────────────────────────────────── */
+    .field-label {
+      font-size: 10.5px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .field-label .req {
+      font-size: 9px;
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+    }
+
+    /* ── Buttons ─────────────────────────────────────── */
+    .save-btn {
+      width: 100%;
+      padding: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .save-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+    .save-btn:active { transform: translateY(0); }
+
+    /* ── Status ──────────────────────────────────────── */
+    #save-status {
+      font-size: 11px;
+      text-align: center;
+      min-height: 16px;
+      transition: color 0.3s;
+    }
+
+    #save-status.ok  { color: var(--success); }
+    #save-status.err { color: var(--danger); }
+
+    /* ── Mode Cards ──────────────────────────────────── */
+    .mode-cards { display: flex; flex-direction: column; gap: 6px; }
+
+    .mode-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+    }
+
+    .mode-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .mode-card h3 { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+    .mode-card p  { font-size: 10px; color: var(--muted); line-height: 1.5; }
+
+    .badge {
+      display: inline-block;
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .badge.offline { background: rgba(34,197,94,0.15); color: var(--success); }
+    .badge.online  { background: rgba(245,158,11,0.15); color: var(--warn); }
+
+    /* ── Steps ───────────────────────────────────────── */
+    .steps {
+      list-style: none;
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px; height: 17px;
+      background: rgba(37,99,235,0.2);
+      border: 1px solid rgba(37,99,235,0.4);
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    .footer {
+      padding: 10px 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .api-status {
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .api-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .api-dot.ok {
+      background: var(--success);
+      box-shadow: 0 0 5px rgba(34,197,94,0.5);
+    }
+
+    .footer-link {
+      font-size: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-link:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-orb">🔍</div>
+    <div class="header-text">
+      <h1>AI Reader Lens</h1>
+      <p>Drag the lens · Read aloud · AI-powered</p>
+    </div>
+    <span class="version">v2.0</span>
+  </div>
+
+  <div class="body">
+
+    <!-- Toggle Lens Button -->
+    <button class="toggle-btn" id="toggle-btn">🔍 Show / Hide Lens on Page</button>
+
+    <!-- API Key -->
+    <div class="section">
+      <div class="section-head">🔑 Gemini API Key</div>
+      <div class="section-body">
+        <div>
+          <div class="field-label">
+            <span>API Key</span>
+            <span class="req">Required for Meta & Instru modes</span>
+          </div>
+          <input type="password" id="api-key" placeholder="AIza…" autocomplete="off">
+        </div>
+        <button class="save-btn" id="save-btn">Save Key</button>
+        <div id="save-status"></div>
+      </div>
+    </div>
+
+    <!-- How to Use -->
+    <div class="section">
+      <div class="section-head">🚀 How to Use</div>
+      <div class="section-body">
+        <ol class="steps">
+          <li>Click <strong>Show / Hide Lens</strong> above or the 🔍 button on any page</li>
+          <li>Drag the blue lens over text you want to read</li>
+          <li>It auto-reads after you stop dragging (toggle Auto-Read in the panel)</li>
+          <li>Or press ▶ in the control panel below the lens</li>
+          <li>Choose Normal (offline) or Meta/Instru-Read (Gemini AI)</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Reading Modes -->
+    <div class="section">
+      <div class="section-head">📖 Reading Modes</div>
+      <div class="section-body">
+        <div class="mode-cards">
+          <div class="mode-card">
+            <div class="mode-icon">📖</div>
+            <div>
+              <h3>Normal <span class="badge offline">Offline</span></h3>
+              <p>Reads text aloud using your browser's built-in speech engine. No internet needed.</p>
+            </div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-icon">🧠</div>
+            <div>
+              <h3>Meta-Read <span class="badge online">Online</span></h3>
+              <p>Gemini summarizes and explains the text, then reads the explanation aloud.</p>
+            </div>
+          </div>
+          <div class="mode-card">
+            <div class="mode-icon">🎓</div>
+            <div>
+              <h3>Instru-Read <span class="badge online">Online</span></h3>
+              <p>Gemini guides you through concepts with analogies, examples, and deep breakdowns.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="api-status">
+      <div class="api-dot" id="api-dot"></div>
+      <span id="api-label">No key saved</span>
+    </div>
+    <a class="footer-link" href="https://aistudio.google.com/app/apikey" target="_blank">
+      Get Gemini Key →
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
